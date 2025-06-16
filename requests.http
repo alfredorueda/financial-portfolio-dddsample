@@ -1,0 +1,61 @@
+### Get demo portfolio (replace PORTFOLIO_ID with actual ID from application startup logs)
+GET http://localhost:8080/api/portfolios/PORTFOLIO_ID
+
+### Create a new portfolio
+POST http://localhost:8080/api/portfolios
+Content-Type: application/json
+
+{
+  "ownerName": "John Doe"
+}
+
+### Deposit funds
+POST http://localhost:8080/api/portfolios/PORTFOLIO_ID/deposits
+Content-Type: application/json
+
+{
+  "amount": 5000.00
+}
+
+### Withdraw funds
+POST http://localhost:8080/api/portfolios/PORTFOLIO_ID/withdrawals
+Content-Type: application/json
+
+{
+  "amount": 1000.00
+}
+
+### Buy stock
+POST http://localhost:8080/api/portfolios/PORTFOLIO_ID/purchases
+Content-Type: application/json
+
+{
+  "ticker": "TSLA",
+  "quantity": 5,
+  "price": 210.45
+}
+
+### Sell stock
+POST http://localhost:8080/api/portfolios/PORTFOLIO_ID/sales
+Content-Type: application/json
+
+{
+  "ticker": "AAPL",
+  "quantity": 2,
+  "price": 180.25
+}
+
+### Get stock price
+GET http://localhost:8080/api/stocks/AAPL/price
+
+### Get all transactions
+GET http://localhost:8080/api/portfolios/PORTFOLIO_ID/transactions
+
+### Get filtered transactions
+GET http://localhost:8080/api/portfolios/PORTFOLIO_ID/transactions?ticker=AAPL&type=PURCHASE
+
+### Get portfolio performance
+GET http://localhost:8080/api/portfolios/PORTFOLIO_ID/performance
+
+### Get limited portfolio performance
+GET http://localhost:8080/api/portfolios/PORTFOLIO_ID/performance?limit=2
