@@ -26,7 +26,7 @@ import java.time.LocalDate;
 public class Lot {
     @Id 
     private String id;
-    
+    // TODO: Falta How many shares were initially purchased
     private int remaining;
     private BigDecimal unitPrice;
     private LocalDate purchasedAt;

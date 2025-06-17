@@ -30,6 +30,24 @@ public class Holding {
     
     private String ticker;
 
+    /**
+     * Collection implementation note:
+     * 
+     * Using List<Lot> with @OrderBy is an elegant solution that balances:
+     * 
+     * 1. DDD principles:
+     *    - Accurately models the domain concept of chronologically ordered lots
+     *    - Preserves the natural temporal sequence needed for FIFO accounting
+     *    - Maintains a clean and intuitive domain model that directly expresses business rules
+     * 
+     * 2. JPA/Hibernate efficiency:
+     *    - Leverages database-level ordering for optimal performance
+     *    - Provides excellent performance for typical collection sizes (up to hundreds of elements)
+     *    - Avoids complex mapping configurations while maintaining good persistence characteristics
+     * 
+     * This implementation represents a well-balanced approach that prioritizes both 
+     * domain model elegance and persistence efficiency.
+     */
     @OneToMany(cascade = ALL, orphanRemoval = true)
     @JoinColumn(name = "holding_id")
     @OrderBy("purchasedAt ASC")
@@ -55,7 +73,7 @@ public class Holding {
         if (getTotalShares() < quantity) {
             throw new InvalidQuantityException("Not enough shares to sell. Available: " + getTotalShares() + ", Requested: " + quantity);
         }
-        
+
         int remainingToSell = quantity;
         BigDecimal costBasis = BigDecimal.ZERO;
         
@@ -100,4 +118,6 @@ public class Holding {
     public List<Lot> getLots() {
         return lots;
     }
+
+    // TODO: @Override equals and hashCode methods for proper entity comparison
 }
