@@ -1,0 +1,176 @@
+@startuml "Portfolio Domain Model"
+
+' Class definitions with attributes and methods
+class Portfolio {
+  -String id
+  -String ownerName
+  -BigDecimal balance
+  -LocalDate createdAt
+  -Set<Holding> holdings
+  +Portfolio(String id, String ownerName)
+  +{static} create(String ownerName): Portfolio
+  +deposit(BigDecimal amount): void
+  +withdraw(BigDecimal amount): void
+  +buy(String ticker, int quantity, BigDecimal price): void
+  +sell(String ticker, int quantity, BigDecimal price): SellResult
+  -findOrCreateHolding(String ticker): Holding
+  +getId(): String
+  +getOwnerName(): String
+  +getBalance(): BigDecimal
+  +getCreatedAt(): LocalDate
+  +getHoldings(): Set<Holding>
+  +isEmpty(): boolean
+}
+
+class Holding {
+  -String id
+  -String ticker
+  -List<Lot> lots
+  +Holding(String id, String ticker)
+  +{static} create(String ticker): Holding
+  +buy(int quantity, BigDecimal unitPrice): void
+  +sell(int quantity, BigDecimal sellPrice): SellResult
+  +getTotalShares(): int
+  +isEmpty(): boolean
+  +getId(): String
+  +getTicker(): String
+  +getLots(): List<Lot>
+}
+
+class Lot {
+  -String id
+  -int remaining
+  -BigDecimal unitPrice
+  -LocalDate purchasedAt
+  +Lot(String id, int quantity, BigDecimal unitPrice)
+  +reduce(int qty): void
+  +isEmpty(): boolean
+  +getId(): String
+  +getRemaining(): int
+  +getUnitPrice(): BigDecimal
+  +getPurchasedAt(): LocalDate
+}
+
+class Transaction {
+  -String id
+  -String portfolioId
+  -TransactionType type
+  -String ticker
+  -int quantity
+  -BigDecimal unitPrice
+  -BigDecimal totalAmount
+  -BigDecimal profit
+  -LocalDateTime timestamp
+  -Transaction(String id, String portfolioId, TransactionType type, String ticker, int quantity, BigDecimal unitPrice, BigDecimal totalAmount, BigDecimal profit, LocalDateTime timestamp)
+  +{static} createDeposit(String portfolioId, BigDecimal amount): Transaction
+  +{static} createWithdrawal(String portfolioId, BigDecimal amount): Transaction
+  +{static} createPurchase(String portfolioId, String ticker, int quantity, BigDecimal unitPrice): Transaction
+  +{static} createSale(String portfolioId, String ticker, int quantity, BigDecimal unitPrice, BigDecimal totalAmount, BigDecimal profit): Transaction
+  +getId(): String
+  +getPortfolioId(): String
+  +getType(): TransactionType
+  +getTicker(): String
+  +getQuantity(): int
+  +getUnitPrice(): BigDecimal
+  +getTotalAmount(): BigDecimal
+  +getProfit(): BigDecimal
+  +getTimestamp(): LocalDateTime
+}
+
+enum TransactionType {
+  DEPOSIT
+  WITHDRAWAL
+  PURCHASE
+  SALE
+}
+
+class SellResult <<record>> {
+  +BigDecimal proceeds
+  +BigDecimal costBasis
+  +BigDecimal profit
+}
+
+class InvestmentSummaryDto <<record>> {
+  +String ticker
+  +int totalSharesPurchased
+  +int totalSharesSold
+  +BigDecimal totalInvested
+  +BigDecimal totalProceeds
+  +BigDecimal totalProfit
+  +BigDecimal averageBuyPrice
+  +BigDecimal currentMarketPrice
+  +BigDecimal unrealizedGain
+}
+
+' Domain exceptions
+package "exception" {
+  class DomainException {
+  }
+  
+  class InsufficientSharesException {
+    +InsufficientSharesException(String message)
+    +InsufficientSharesException(String symbol, int requestedQuantity, int availableQuantity)
+  }
+  
+  class HoldingNotFoundException {
+  }
+  
+  class InvalidAmountException {
+  }
+  
+  class InvalidQuantityException {
+  }
+  
+  class InsufficientFundsException {
+  }
+}
+
+' Inheritance relationships
+DomainException <|-- InsufficientSharesException
+DomainException <|-- HoldingNotFoundException
+DomainException <|-- InvalidAmountException
+DomainException <|-- InvalidQuantityException
+DomainException <|-- InsufficientFundsException
+
+' Composition and aggregation relationships
+Portfolio "1" *-- "0..*" Holding : contains >
+Holding "1" *-- "0..*" Lot : contains >
+Transaction "0..*" --> "1" TransactionType : has >
+Holding ..> SellResult : returns >
+Portfolio ..> SellResult : returns >
+
+' References
+Transaction ..> "references" Portfolio : portfolioId >
+
+' Notes
+note top of Portfolio
+  Aggregate Root in DDD terms.
+  Encapsulates a collection of stocks.
+end note
+
+note top of Holding
+  Entity that belongs to Portfolio aggregate.
+  Tracks all lots (purchases) of a particular stock.
+end note
+
+note top of Lot
+  Entity that belongs to Holding aggregate.
+  Tracks details of a single stock purchase.
+end note
+
+note top of SellResult
+  Value Object that encapsulates
+  the results of a sell operation.
+end note
+
+note top of Transaction
+  Entity that records financial activities
+  within a portfolio.
+end note
+
+note top of InvestmentSummaryDto
+  Value Object that summarizes
+  investment metrics for a stock.
+end note
+
+@enduml
