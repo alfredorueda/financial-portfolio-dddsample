@@ -43,8 +43,10 @@ public class Holding {
      * 2. JPA/Hibernate efficiency:
      *    - Leverages database-level ordering for optimal performance
      *    - Provides excellent performance for typical collection sizes (up to hundreds of elements)
+     *    - Typically, collections only begin to show performance issues when they exceed
+     *      several thousand elements (5,000-10,000+)
      *    - Avoids complex mapping configurations while maintaining good persistence characteristics
-     * 
+     *
      * This implementation represents a well-balanced approach that prioritizes both 
      * domain model elegance and persistence efficiency.
      */
