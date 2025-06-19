@@ -10,7 +10,9 @@ import java.util.Optional;
 
 public interface TransactionPort {
     Transaction save(Transaction transaction);
-    
+
+    // TODO: No usar `Optional` en los parámetros de búsqueda, ya que es mejor usar sobrecargas de métodos
+
     List<Transaction> findByPortfolioId(String portfolioId, Optional<String> ticker, 
                                         Optional<TransactionType> type, Optional<LocalDate> fromDate,
                                         Optional<LocalDate> toDate, Optional<BigDecimal> minAmount,

@@ -74,6 +74,7 @@ public class PortfolioService implements PortfolioUseCase {
     @Transactional
     public void buyStock(String portfolioId, String ticker, int quantity) {
         // Obtenemos el precio actual del mercado usando StockPricePort
+        // TODO: Handle case where ticker is not found or price cannot be fetched
         BigDecimal currentPrice = stockPricePort.fetchStockPrice(ticker);
         
         Portfolio portfolio = getPortfolio(portfolioId);
