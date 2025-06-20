@@ -1,7 +1,9 @@
 package com.alfredorueda.portfolio.adapters.in.rest;
 
 import com.alfredorueda.portfolio.adapters.in.rest.dto.*;
-import com.alfredorueda.portfolio.application.port.in.PortfolioUseCase;
+import com.alfredorueda.portfolio.application.port.in.PortfolioAnalysisUseCase;
+import com.alfredorueda.portfolio.application.port.in.PortfolioManagementUseCase;
+import com.alfredorueda.portfolio.application.port.in.StockTradingUseCase;
 import com.alfredorueda.portfolio.domain.InvestmentSummaryDto;
 import com.alfredorueda.portfolio.domain.Portfolio;
 import com.alfredorueda.portfolio.domain.SellResult;
@@ -19,45 +21,52 @@ import java.util.Optional;
 @RequestMapping("/api/portfolios")
 public class PortfolioController {
     
-    private final PortfolioUseCase portfolioUseCase;
+    private final PortfolioManagementUseCase portfolioManagementUseCase;
+    private final StockTradingUseCase stockTradingUseCase;
+    private final PortfolioAnalysisUseCase portfolioAnalysisUseCase;
     
-    public PortfolioController(PortfolioUseCase portfolioUseCase) {
-        this.portfolioUseCase = portfolioUseCase;
+    public PortfolioController(
+            PortfolioManagementUseCase portfolioManagementUseCase,
+            StockTradingUseCase stockTradingUseCase,
+            PortfolioAnalysisUseCase portfolioAnalysisUseCase) {
+        this.portfolioManagementUseCase = portfolioManagementUseCase;
+        this.stockTradingUseCase = stockTradingUseCase;
+        this.portfolioAnalysisUseCase = portfolioAnalysisUseCase;
     }
     
     @PostMapping
     public ResponseEntity<Portfolio> createPortfolio(@RequestBody CreatePortfolioRequest request) {
-        Portfolio portfolio = portfolioUseCase.createPortfolio(request.ownerName());
+        Portfolio portfolio = portfolioManagementUseCase.createPortfolio(request.ownerName());
         return new ResponseEntity<>(portfolio, HttpStatus.CREATED);
     }
     
     @GetMapping("/{id}")
     public ResponseEntity<Portfolio> getPortfolio(@PathVariable String id) {
-        Portfolio portfolio = portfolioUseCase.getPortfolio(id);
+        Portfolio portfolio = portfolioManagementUseCase.getPortfolio(id);
         return ResponseEntity.ok(portfolio);
     }
     
     @PostMapping("/{id}/deposits")
     public ResponseEntity<Void> deposit(@PathVariable String id, @RequestBody DepositRequest request) {
-        portfolioUseCase.deposit(id, request.amount());
+        portfolioManagementUseCase.deposit(id, request.amount());
         return ResponseEntity.ok().build();
     }
     
     @PostMapping("/{id}/withdrawals")
     public ResponseEntity<Void> withdraw(@PathVariable String id, @RequestBody WithdrawalRequest request) {
-        portfolioUseCase.withdraw(id, request.amount());
+        portfolioManagementUseCase.withdraw(id, request.amount());
         return ResponseEntity.ok().build();
     }
     
     @PostMapping("/{id}/purchases")
     public ResponseEntity<Void> buyStock(@PathVariable String id, @RequestBody PurchaseRequest request) {
-        portfolioUseCase.buyStock(id, request.ticker(), request.quantity());
+        stockTradingUseCase.buyStock(id, request.ticker(), request.quantity());
         return ResponseEntity.ok().build();
     }
     
     @PostMapping("/{id}/sales")
     public ResponseEntity<SaleResponse> sellStock(@PathVariable String id, @RequestBody SaleRequest request) {
-        SellResult result = portfolioUseCase.sellStock(id, request.ticker(), request.quantity());
+        SellResult result = stockTradingUseCase.sellStock(id, request.ticker(), request.quantity());
         return ResponseEntity.ok(new SaleResponse(result));
     }
     
@@ -71,7 +80,7 @@ public class PortfolioController {
             @RequestParam(required = false) BigDecimal minAmount,
             @RequestParam(required = false) BigDecimal maxAmount) {
         
-        List<Transaction> transactions = portfolioUseCase.getTransactions(
+        List<Transaction> transactions = portfolioAnalysisUseCase.getTransactions(
                 id,
                 Optional.ofNullable(ticker),
                 Optional.ofNullable(type),
@@ -89,7 +98,7 @@ public class PortfolioController {
             @PathVariable String id,
             @RequestParam(required = false) Integer limit) {
         
-        List<InvestmentSummaryDto> performance = portfolioUseCase.getPortfolioPerformance(
+        List<InvestmentSummaryDto> performance = portfolioAnalysisUseCase.getPortfolioPerformance(
                 id, Optional.ofNullable(limit));
         
         return ResponseEntity.ok(performance);

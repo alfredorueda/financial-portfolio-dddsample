@@ -70,7 +70,8 @@ public class Portfolio {
         }
         this.balance = this.balance.subtract(amount);
     }
-    
+
+    // TODO: quantity and price as value object
     public void buy(String ticker, int quantity, BigDecimal price) {
         if (quantity <= 0) {
             throw new InvalidQuantityException("Quantity must be positive");
