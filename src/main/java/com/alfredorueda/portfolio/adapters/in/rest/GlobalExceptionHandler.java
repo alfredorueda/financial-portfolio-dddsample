@@ -8,6 +8,8 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 
 import java.time.LocalDateTime;
 
+// TODO: unificar los dos gestores de excepciones. Gestionar bien las excepciones de negocio.
+//         Devolver los códigos HTTP correctos en cada caso.
 @ControllerAdvice
 public class GlobalExceptionHandler {
 

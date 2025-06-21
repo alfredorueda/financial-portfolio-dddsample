@@ -27,7 +27,11 @@ import static jakarta.persistence.CascadeType.ALL;
 public class Holding {
     @Id 
     private String id;
-    
+
+    // TODO: Consider using a more complex type for ticker,
+    //  like StockTicker, to encapsulate validation and formatting logic.
+    // This would allow for better type safety and encapsulation.
+    // In terms of DDD, this could be a Value Object.
     private String ticker;
 
     /**
