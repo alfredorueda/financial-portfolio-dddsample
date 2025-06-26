@@ -1,6 +1,7 @@
 package com.alfredorueda.portfolio.application.service;
 
 import com.alfredorueda.portfolio.application.port.in.PortfolioAnalysisUseCase;
+import com.alfredorueda.portfolio.application.port.in.dto.TransactionFilter;
 import com.alfredorueda.portfolio.application.port.out.LoadPortfolioPort;
 import com.alfredorueda.portfolio.application.port.out.StockPricePort;
 import com.alfredorueda.portfolio.application.port.out.TransactionPort;
@@ -41,28 +42,21 @@ public class PortfolioAnalysisService implements PortfolioAnalysisUseCase {
     
     @Override
     @Transactional(readOnly = true)
-    public List<Transaction> getTransactions(
-            String portfolioId,
-            Optional<String> ticker,
-            Optional<String> type,
-            Optional<LocalDate> fromDate,
-            Optional<LocalDate> toDate,
-            Optional<BigDecimal> minAmount,
-            Optional<BigDecimal> maxAmount) {
-        
+    public List<Transaction> getTransactions(TransactionFilter filter) {
         // Verify portfolio exists
-        getPortfolio(portfolioId);
-        
-        Optional<TransactionType> transactionType = type.map(t -> TransactionType.valueOf(t.toUpperCase()));
-        
+        getPortfolio(filter.getPortfolioId());
+
+
+
         return transactionPort.findByPortfolioId(
-                portfolioId, 
-                ticker, 
-                transactionType, 
-                fromDate, 
-                toDate, 
-                minAmount, 
-                maxAmount);
+                filter.getPortfolioId(),
+                filter.getTicker(),
+                filter.getType().map(TransactionType::valueOf),
+                filter.getFromDate(),
+                filter.getToDate(),
+                filter.getMinAmount(),
+                filter.getMaxAmount()
+        );
     }
     
     @Override

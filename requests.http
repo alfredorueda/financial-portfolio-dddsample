@@ -41,8 +41,7 @@ Content-Type: application/json
 
 {
   "ticker": "AAPL",
-  "quantity": 2,
-  "price": 180.25
+  "quantity": 2
 }
 
 ### Get stock price

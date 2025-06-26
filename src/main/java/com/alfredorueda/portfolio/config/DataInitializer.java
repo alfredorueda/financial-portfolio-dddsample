@@ -21,7 +21,7 @@ public class DataInitializer {
         return args -> {
             // Create a demo portfolio
             Portfolio portfolio = portfolioManagementUseCase.createPortfolio("Demo User");
-            String portfolioId = portfolio.id();
+            String portfolioId = portfolio.getId();
             
             // Add initial balance
             portfolioManagementUseCase.deposit(portfolioId, new BigDecimal("10000.00"));

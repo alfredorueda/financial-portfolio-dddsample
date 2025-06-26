@@ -71,7 +71,7 @@ public class PortfolioController {
     }
     
     @GetMapping("/{id}/transactions")
-    public ResponseEntity<List<Transaction>> getTransactions(
+    public ResponseEntity<TransactionListResponse> getTransactions(
             @PathVariable String id,
             @RequestParam(required = false) String ticker,
             @RequestParam(required = false) String type,
@@ -90,17 +90,17 @@ public class PortfolioController {
                 Optional.ofNullable(maxAmount)
         );
         
-        return ResponseEntity.ok(transactions);
+        return ResponseEntity.ok(new TransactionListResponse(transactions));
     }
     
     @GetMapping("/{id}/performance")
-    public ResponseEntity<List<InvestmentSummaryDto>> getPortfolioPerformance(
+    public ResponseEntity<PerformanceResponse> getPortfolioPerformance(
             @PathVariable String id,
             @RequestParam(required = false) Integer limit) {
         
         List<InvestmentSummaryDto> performance = portfolioAnalysisUseCase.getPortfolioPerformance(
                 id, Optional.ofNullable(limit));
         
-        return ResponseEntity.ok(performance);
+        return ResponseEntity.ok(new PerformanceResponse(performance));
     }
 }

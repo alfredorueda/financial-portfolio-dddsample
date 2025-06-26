@@ -45,6 +45,7 @@ public class StockTradingService implements StockTradingUseCase {
     @Transactional
     public void buyStock(String portfolioId, String ticker, int quantity) {
         // Get current market price
+        // TODO: Consider using a more robust error handling strategy for stock price fetching
         BigDecimal currentPrice = stockPricePort.fetchStockPrice(ticker);
         
         // Update portfolio
@@ -60,7 +61,7 @@ public class StockTradingService implements StockTradingUseCase {
     @Override
     @Transactional
     public SellResult sellStock(String portfolioId, String ticker, int quantity) {
-        // Get current market price
+        // Get current market price from FinHub API
         BigDecimal currentPrice = stockPricePort.fetchStockPrice(ticker);
         
         // Update portfolio

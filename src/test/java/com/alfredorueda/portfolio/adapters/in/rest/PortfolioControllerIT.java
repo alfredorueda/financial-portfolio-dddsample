@@ -4,16 +4,23 @@ import io.restassured.RestAssured;
 import io.restassured.http.ContentType;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Timeout;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.http.HttpStatus;
+import org.springframework.test.context.ActiveProfiles;
 
-import java.math.BigDecimal;
+import java.util.concurrent.TimeUnit;
 
 import static io.restassured.RestAssured.given;
 import static org.hamcrest.Matchers.*;
 
+/**
+ * End-to-end integration test for the PortfolioController.
+ * This test uses the real implementations of all components without mocking.
+ */
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+@ActiveProfiles("integrationtest")
 public class PortfolioControllerIT {
     
     @LocalServerPort
@@ -124,6 +131,7 @@ public class PortfolioControllerIT {
     }
     
     @Test
+    @Timeout(value = 15, unit = TimeUnit.SECONDS)
     public void testBuyStock() {
         // Deposit first
         given()
@@ -134,10 +142,17 @@ public class PortfolioControllerIT {
             .then()
             .statusCode(HttpStatus.OK.value());
         
-        // Buy stock
+        // Get current market price (just for info, not to be passed in the request)
+        given()
+            .when()
+            .get("/api/stocks/{ticker}/price", "AAPL")
+            .then()
+            .statusCode(HttpStatus.OK.value());
+        
+        // Buy stock - price will be obtained internally through FinHub API
         given()
             .contentType(ContentType.JSON)
-            .body("{\"ticker\": \"AAPL\", \"quantity\": 5, \"price\": 180.00}")
+            .body("{\"ticker\": \"AAPL\", \"quantity\": 5}")
             .when()
             .post("/api/portfolios/{id}/purchases", portfolioId)
             .then()
@@ -149,7 +164,7 @@ public class PortfolioControllerIT {
             .get("/api/portfolios/{id}", portfolioId)
             .then()
             .statusCode(HttpStatus.OK.value())
-            .body("balance", comparesEqualTo(1100.00f))
+            .body("balance", greaterThan(0.0f))
             .body("holdings", hasSize(1))
             .body("holdings[0].ticker", equalTo("AAPL"))
             .body("holdings[0].lots", hasSize(1))
@@ -157,35 +172,51 @@ public class PortfolioControllerIT {
     }
     
     @Test
+    @Timeout(value = 20, unit = TimeUnit.SECONDS)
     public void testSellStock() {
         // Deposit
         given()
             .contentType(ContentType.JSON)
-            .body("{\"amount\": 2000.00}")
+            .body("{\"amount\": 5000.00}")
             .when()
             .post("/api/portfolios/{id}/deposits", portfolioId)
             .then()
             .statusCode(HttpStatus.OK.value());
         
-        // Buy stock
+        // Get current market price (just for info, not to be passed in the request)
+        given()
+            .when()
+            .get("/api/stocks/{ticker}/price", "MSFT")
+            .then()
+            .statusCode(HttpStatus.OK.value());
+        
+        // Buy stock - price will be obtained internally through FinHub API
         given()
             .contentType(ContentType.JSON)
-            .body("{\"ticker\": \"MSFT\", \"quantity\": 5, \"price\": 350.00}")
+            .body("{\"ticker\": \"MSFT\", \"quantity\": 5}")
             .when()
             .post("/api/portfolios/{id}/purchases", portfolioId)
             .then()
             .statusCode(HttpStatus.OK.value());
         
-        // Sell some shares at a profit
+        // Add a small delay to avoid rate limiting
+        try {
+            Thread.sleep(1000);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        }
+        
+        // Sell some shares (price will be obtained from FinHub API)
         given()
             .contentType(ContentType.JSON)
-            .body("{\"ticker\": \"MSFT\", \"quantity\": 2, \"price\": 360.00}")
+            .body("{\"ticker\": \"MSFT\", \"quantity\": 2}")
             .when()
             .post("/api/portfolios/{id}/sales", portfolioId)
             .then()
             .statusCode(HttpStatus.OK.value())
-            .body("proceeds", comparesEqualTo(720.00f))
-            .body("profit", greaterThan(0.0f));
+            .body("proceeds", greaterThan(0.0f))
+            .body("costBasis", greaterThan(0.0f))
+            .body("profit", notNullValue());
         
         // Verify portfolio state
         given()
@@ -202,7 +233,7 @@ public class PortfolioControllerIT {
     public void testSellNonExistentStock() {
         given()
             .contentType(ContentType.JSON)
-            .body("{\"ticker\": \"XYZ\", \"quantity\": 1, \"price\": 100.00}")
+            .body("{\"ticker\": \"XYZ\", \"quantity\": 1}")
             .when()
             .post("/api/portfolios/{id}/sales", portfolioId)
             .then()
@@ -212,6 +243,7 @@ public class PortfolioControllerIT {
     }
     
     @Test
+    @Timeout(value = 20, unit = TimeUnit.SECONDS)
     public void testGetTransactions() {
         // Add some transactions
         given()
@@ -221,10 +253,17 @@ public class PortfolioControllerIT {
             .post("/api/portfolios/{id}/deposits", portfolioId)
             .then()
             .statusCode(HttpStatus.OK.value());
+        
+        // Get current market price (just for info, not to be passed in the request)
+        given()
+            .when()
+            .get("/api/stocks/{ticker}/price", "AAPL")
+            .then()
+            .statusCode(HttpStatus.OK.value());
             
         given()
             .contentType(ContentType.JSON)
-            .body("{\"ticker\": \"AAPL\", \"quantity\": 2, \"price\": 170.00}")
+            .body("{\"ticker\": \"AAPL\", \"quantity\": 2}")
             .when()
             .post("/api/portfolios/{id}/purchases", portfolioId)
             .then()
@@ -251,6 +290,7 @@ public class PortfolioControllerIT {
     }
     
     @Test
+    @Timeout(value = 30, unit = TimeUnit.SECONDS)
     public void testGetPortfolioPerformance() {
         // Add transactions for performance data
         given()
@@ -260,27 +300,61 @@ public class PortfolioControllerIT {
             .post("/api/portfolios/{id}/deposits", portfolioId)
             .then()
             .statusCode(HttpStatus.OK.value());
-            
+        
+        // Get current market prices (just for info, not to be passed in requests)
         given()
-            .contentType(ContentType.JSON)
-            .body("{\"ticker\": \"AAPL\", \"quantity\": 10, \"price\": 170.00}")
             .when()
-            .post("/api/portfolios/{id}/purchases", portfolioId)
+            .get("/api/stocks/{ticker}/price", "AAPL")
+            .then()
+            .statusCode(HttpStatus.OK.value());
+        
+        // Add a small delay to avoid rate limiting
+        try {
+            Thread.sleep(1000);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        }
+        
+        given()
+            .when()
+            .get("/api/stocks/{ticker}/price", "MSFT")
             .then()
             .statusCode(HttpStatus.OK.value());
             
         given()
             .contentType(ContentType.JSON)
-            .body("{\"ticker\": \"MSFT\", \"quantity\": 5, \"price\": 350.00}")
+            .body("{\"ticker\": \"AAPL\", \"quantity\": 10}")
             .when()
             .post("/api/portfolios/{id}/purchases", portfolioId)
             .then()
             .statusCode(HttpStatus.OK.value());
         
-        // Sell some AAPL at a profit
+        // Add a small delay to avoid rate limiting
+        try {
+            Thread.sleep(1000);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        }
+            
         given()
             .contentType(ContentType.JSON)
-            .body("{\"ticker\": \"AAPL\", \"quantity\": 3, \"price\": 175.00}")
+            .body("{\"ticker\": \"MSFT\", \"quantity\": 5}")
+            .when()
+            .post("/api/portfolios/{id}/purchases", portfolioId)
+            .then()
+            .statusCode(HttpStatus.OK.value());
+        
+        // Add a small delay to avoid rate limiting
+        try {
+            Thread.sleep(1000);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        }
+        
+        // Sell some AAPL shares (price will be obtained from FinHub API)
+        given()
+            .contentType(ContentType.JSON)
+            .body("{\"ticker\": \"AAPL\", \"quantity\": 3}")
             .when()
             .post("/api/portfolios/{id}/sales", portfolioId)
             .then()
