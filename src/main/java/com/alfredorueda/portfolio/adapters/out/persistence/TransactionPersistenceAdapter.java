@@ -1,6 +1,7 @@
 package com.alfredorueda.portfolio.adapters.out.persistence;
 
 import com.alfredorueda.portfolio.application.port.out.TransactionPort;
+import com.alfredorueda.portfolio.application.port.in.dto.TransactionFilter;
 import com.alfredorueda.portfolio.domain.Transaction;
 import com.alfredorueda.portfolio.domain.TransactionType;
 import org.springframework.stereotype.Component;
@@ -27,27 +28,23 @@ public class TransactionPersistenceAdapter implements TransactionPort {
     }
     
     @Override
-    public List<Transaction> findByPortfolioId(String portfolioId, Optional<String> ticker,
-                                             Optional<TransactionType> type, Optional<LocalDate> fromDate,
-                                             Optional<LocalDate> toDate, Optional<BigDecimal> minAmount,
-                                             Optional<BigDecimal> maxAmount) {
-        
-        LocalDateTime fromDateTime = fromDate
+    public List<Transaction> findByPortfolioId(TransactionFilter filter) {
+        LocalDateTime fromDateTime = filter.getFromDate()
                 .map(date -> LocalDateTime.of(date, LocalTime.MIN))
                 .orElse(null);
-        
-        LocalDateTime toDateTime = toDate
+
+        LocalDateTime toDateTime = filter.getToDate()
                 .map(date -> LocalDateTime.of(date, LocalTime.MAX))
                 .orElse(null);
-        
+
         return transactionRepository.findByPortfolioIdWithFilters(
-                portfolioId,
-                ticker.orElse(null),
-                type.orElse(null),
+                filter.getPortfolioId(),
+                filter.getTicker().orElse(null),
+                filter.getType().map(TransactionType::valueOf).orElse(null),
                 fromDateTime,
                 toDateTime,
-                minAmount.orElse(null),
-                maxAmount.orElse(null)
+                filter.getMinAmount().orElse(null),
+                filter.getMaxAmount().orElse(null)
         );
     }
 }

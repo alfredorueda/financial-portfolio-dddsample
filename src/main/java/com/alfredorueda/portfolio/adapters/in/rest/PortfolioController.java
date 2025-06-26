@@ -4,6 +4,7 @@ import com.alfredorueda.portfolio.adapters.in.rest.dto.*;
 import com.alfredorueda.portfolio.application.port.in.PortfolioAnalysisUseCase;
 import com.alfredorueda.portfolio.application.port.in.PortfolioManagementUseCase;
 import com.alfredorueda.portfolio.application.port.in.StockTradingUseCase;
+import com.alfredorueda.portfolio.application.port.in.dto.TransactionFilter;
 import com.alfredorueda.portfolio.domain.InvestmentSummaryDto;
 import com.alfredorueda.portfolio.domain.Portfolio;
 import com.alfredorueda.portfolio.domain.SellResult;
@@ -79,17 +80,15 @@ public class PortfolioController {
             @RequestParam(required = false) LocalDate toDate,
             @RequestParam(required = false) BigDecimal minAmount,
             @RequestParam(required = false) BigDecimal maxAmount) {
-        
-        List<Transaction> transactions = portfolioAnalysisUseCase.getTransactions(
-                id,
-                Optional.ofNullable(ticker),
-                Optional.ofNullable(type),
-                Optional.ofNullable(fromDate),
-                Optional.ofNullable(toDate),
-                Optional.ofNullable(minAmount),
-                Optional.ofNullable(maxAmount)
-        );
-        
+
+        TransactionFilter filter = new TransactionFilter(id)
+                .withTicker(ticker)
+                .withType(type)
+                .withDateRange(fromDate, toDate)
+                .withAmountRange(minAmount, maxAmount);
+
+        List<Transaction> transactions = portfolioAnalysisUseCase.getTransactions(filter);
+
         return ResponseEntity.ok(new TransactionListResponse(transactions));
     }
     

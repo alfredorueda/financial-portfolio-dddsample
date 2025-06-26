@@ -43,37 +43,18 @@ public class PortfolioAnalysisService implements PortfolioAnalysisUseCase {
     @Override
     @Transactional(readOnly = true)
     public List<Transaction> getTransactions(TransactionFilter filter) {
-        // Verify portfolio exists
-        getPortfolio(filter.getPortfolioId());
-
-
-
-        return transactionPort.findByPortfolioId(
-                filter.getPortfolioId(),
-                filter.getTicker(),
-                filter.getType().map(TransactionType::valueOf),
-                filter.getFromDate(),
-                filter.getToDate(),
-                filter.getMinAmount(),
-                filter.getMaxAmount()
-        );
+        return transactionPort.findByPortfolioId(filter);
     }
     
     @Override
     @Transactional(readOnly = true)
-    public List<InvestmentSummaryDto> getPortfolioPerformance(String portfolioId, Optional<Integer> limit) {
+    public List<InvestmentSummaryDto> getPortfolioPerformance(String portfolioId, Integer limit) {
         // Verify portfolio exists
         getPortfolio(portfolioId);
         
         // Get all transactions for this portfolio
         List<Transaction> allTransactions = transactionPort.findByPortfolioId(
-                portfolioId, 
-                Optional.empty(), 
-                Optional.empty(), 
-                Optional.empty(), 
-                Optional.empty(), 
-                Optional.empty(), 
-                Optional.empty());
+                new TransactionFilter(portfolioId));
         
         // Group transactions by ticker
         Map<String, List<Transaction>> transactionsByTicker = allTransactions.stream()

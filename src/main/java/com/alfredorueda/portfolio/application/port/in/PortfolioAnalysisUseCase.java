@@ -4,6 +4,7 @@ import com.alfredorueda.portfolio.application.port.in.dto.TransactionFilter;
 import com.alfredorueda.portfolio.domain.InvestmentSummaryDto;
 import com.alfredorueda.portfolio.domain.Transaction;
 import java.util.List;
+import org.springframework.transaction.annotation.Transactional;
 
 /**
  * Interface for portfolio analysis and reporting operations
@@ -14,6 +15,7 @@ public interface PortfolioAnalysisUseCase {
      * @param filter The filter criteria for transactions
      * @return List of transactions matching the filter criteria
      */
+    @Transactional(readOnly = true)
     List<Transaction> getTransactions(TransactionFilter filter);
     
     /**
